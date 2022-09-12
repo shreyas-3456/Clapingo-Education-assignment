@@ -25,6 +25,25 @@ const addTeacher = async (req, res) => {
 		res.status(StatusCodes.CREATED).json({ teacher });
 	}
 };
+
+const deleteFavouriteTeacher = async (req, res) => {
+	let findTeacher = await Teacher.findOne({ name: req.body.name });
+	if (findTeacher) {
+		const ifExists = await Teacher.findOne({
+			$and: [{ _id: findTeacher._id }, { favourite: req.user.userId }],
+		});
+		if (!ifExists) {
+			throw new BadRequestError('Teacher not on your favourite list');
+		}
+		deleteTeacher = await Teacher.findByIdAndUpdate(findTeacher._id, {
+			$pull: { favourite: req.user.userId },
+		});
+		res.status(StatusCodes.OK).json({ deleteTeacher });
+	} else {
+		throw new BadRequestError('Teacher does not exist');
+	}
+};
+
 const getFavouriteTeacher = async (req, res) => {
 	const favouriteTeacher = await Teacher.aggregate([
 		{
@@ -49,4 +68,5 @@ const getFavouriteTeacher = async (req, res) => {
 module.exports = {
 	addTeacher,
 	getFavouriteTeacher,
+	deleteFavouriteTeacher,
 };
